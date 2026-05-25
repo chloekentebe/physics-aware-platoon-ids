@@ -4,7 +4,7 @@ import pandas as pd
 DATA_DIR = Path("data/raw/highD")
 
 def load_recording(recording_id):
-    '''Load a single highD recording by its ID.'''
+    ''' Load a single highD recording by its ID. '''
     tracks_path = DATA_DIR / f"{recording_id:02d}_tracks.csv"
     meta_path = DATA_DIR / f"{recording_id:02d}_tracksMeta.csv"
 
@@ -18,7 +18,7 @@ def load_recording(recording_id):
 
 
 def load_all_recordings():
-    ''' Load all 60 highD recordings.'''
+    ''' Load all 60 highD recordings. '''
 
     all_tracks = []
     all_meta = []
@@ -47,7 +47,7 @@ def filter_trucks(tracks_df, meta_df):
     return truck_tracks, truck_meta
 
 def keep_longituinal_columns(tracks_df):
-    ''' Keep only longitudinal platooning features.'''
+    ''' Keep only longitudinal platooning features. '''
 
     columns = [
         "recordingId",
