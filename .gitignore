@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.pyc
+
+# Virtual environments
+venv/
+.env/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# VS Code
+.vscode/
+
+# macOS
+.DS_Store
+
+# Raw datasets
+data/raw/
+
+# Processed datasets
+data/processed/
+
+# Trained models
+*.pt
+*.pth
+*.h5
+
+# Logs
+*.log
+
+# MATLAB / Simulink
+*.slxc
+*.asv
+*.autosave
