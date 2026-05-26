@@ -1,7 +1,8 @@
 from pathlib import Path
 import pandas as pd
 
-DATA_DIR = Path("data/raw/highD")
+BASE_DIR = Path(__file__).resolve().parents[2] # goes up 3 levels from script
+DATA_DIR = BASE_DIR / "data" / "raw" / "highD"
 
 def load_recording(recording_id):
     ''' Load a single highD recording by its ID. '''
@@ -46,7 +47,7 @@ def filter_trucks(tracks_df, meta_df):
 
     return truck_tracks, truck_meta
 
-def keep_longituinal_columns(tracks_df):
+def keep_longitudinal_columns(tracks_df):
     ''' Keep only longitudinal platooning features. '''
 
     columns = [
