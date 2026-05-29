@@ -33,3 +33,5 @@ data/processed/
 *.slxc
 *.asv
 *.autosave
+simulation/matlab/conservative_data
+simulation/matlab/stable_data

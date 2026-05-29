@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-MIN_SEQUENCE_LENGTH = 200
+MIN_SEQUENCE_LENGTH = 250 # prev 200
 
 def extract_following_sequences(truck_tracks):
     ''' Extract stable truck-following structures. '''
@@ -84,22 +84,45 @@ def compute_acceleration_statistics(sequence):
         "jerk_std": jerk.std()
     }
 
-def estimate_convergence_time(sequence, threshold=2.0):
-    ''' Estimate convergence time to steady spacing. '''
+def estimate_convergence_time(
+    sequence,
+    spacing_threshold=2.0,
+    velocity_threshold=0.5
+):
+    '''
+    Estimate sustained platoon convergence time using:
+    - spacing stabilization
+    - relative velocity stabilization
+    '''
 
     spacing = sequence["dhw"].values
+    velocity = sequence["xVelocity"].values
 
-    steady_state = np.mean(spacing[-50:])
-    error = np.abs(spacing - steady_state)
-    indices = np.where(error < threshold)[0]
+    # steady-state spacing and velocity
+    steady_spacing = np.mean(spacing[-50:])
+    steady_velocity = np.mean(velocity[-50:])
 
-    if len(indices) == 0:
-        return np.nan
-    
-    first_idx = indices[0]
+    # compute errors
+    spacing_error = np.abs(spacing - steady_spacing)
+    velocity_error = np.abs(velocity - steady_velocity)
+
     fps = 25
+    WINDOW = 25  # 1 second sustained convergence
 
-    return first_idx / fps
+    for i in range(len(spacing_error) - WINDOW):
+
+        spacing_stable = np.all(
+            spacing_error[i:i+WINDOW] < spacing_threshold
+        )
+
+        velocity_stable = np.all(
+            velocity_error[i:i+WINDOW] < velocity_threshold
+        )
+
+        if spacing_stable and velocity_stable:
+            return i / fps
+
+    return np.nan
 
 def compute_relative_velocity_statistics(sequence):
     ''' Compute leader-follower relative velocity statistics. '''
