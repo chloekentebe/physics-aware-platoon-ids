@@ -8,37 +8,38 @@ rng(42, "twister");  % fixed seed — same values every run & twister so its con
 
 lhs = lhs_sample(numRuns, 9);  % 9 = number of varied parameters
 
-% Amplitude:      [0.30, 0.42]
-% Velocity base:  26.5 +- 1.5 m/s → [25.0, 28.0]
-% Spacing base:   12 +- 2 m     → [10, 14]
+% Amplitude:       [0.22, 0.32] 
+ampValues = 0.22 + (0.32 - 0.22) * lhs(:,1);
 
-ampValues      = 0.30 + (0.42 - 0.30) * lhs(:,1);
-velBases       = 25.0 + (28.0 - 25.0) * lhs(:,2);
-spacingBases   = 10.0 + (14.0 - 10.0) * lhs(:,3);
+% Velocity base:   [23.5, 25.5]   centers around 21.5 m/s over time
+velBases = 23.5 + (25.5 - 23.5) * lhs(:,2);
 
-% deltaSpeed per message: each varies +-0.2 around its baseline
-deltaSpeedUp1  =  0.1  + (0.5 - 0.1)  * lhs(:,4);   % [0.1,  0.5]
-deltaSpeedUp2  = 0.0 + (0.3 - 0.0) * lhs(:,5); % [0, 0.3]
-deltaSpeedDown = -0.4  + (-0.1 + 0.4) * lhs(:,6);  % [-0.4, -0.1]
+% Spacing base:    [13.0, 17.0]  — tighter gaps than conservative
+spacingBases   = 13.0  + (17.0  - 13.0)  * lhs(:,3);
 
-% Timing offset +-2s applied independently to each message window
-timingOffset1  = -2.0  + (4.0)  * lhs(:,7); % SpeedUp  window:  18 +- 2
-timingOffset2  = -2.0  + (4.0)  * lhs(:,8); % SpeedUp2 window:  30 +- 2
-timingOffset3  = -2.0  + (4.0)  * lhs(:,9); % SlowDown window:  45 +- 2
+% deltaSpeed messages — similar range to conservative
+deltaSpeedUp1  = 0.15 + (0.30 - 0.15) * lhs(:,4);  % [0.15, 0.30]
+deltaSpeedUp2  = 0.10 + (0.20 - 0.10) * lhs(:,5);  % [0.10, 0.20]
+deltaSpeedDown = -0.15 + (-0.05 - (-0.15)) * lhs(:,6); % [-0.15, -0.05]
+
+% Timing offsets +-2s — same as conservative
+timingOffset1  = -2.0  + 4.0 * lhs(:,7);   % SpeedUp  baseline t=14
+timingOffset2  = -2.0  + 4.0 * lhs(:,8);   % SpeedUp2 baseline t=26
+timingOffset3  = -2.0  + 4.0 * lhs(:,9);   % SlowDown baseline t=40
 
 % Shuffle run order so CSV indices aren't sorted by value
 runOrder = randperm(numRuns);
 
 % Output folder
-outPath = '/Users/chloekentebe/physics-aware-platoon-ids/simulation/matlab/stable_data';
+outPath = '/Users/chloekentebe/physics-aware-platoon-ids/simulation/matlab/stable_datav2';
 
 % =========================================================
 % BASELINE DELTAS (preserved relative gaps between vehicles)
 % Velocity:  Leader is fastest, each follower 0.1 m/s slower
 % Spacing:   each gap shrinks by 2m toward the back
 % =========================================================
-velDeltas     = [0.2, 0.1, 0.0, -0.1, -0.2];   % offsets from base for L,F1,F2,F3,F4
-spacingDeltas = [0.2, 0.1, 0.0, -0.1];          % offsets from base for gaps 1-2-3-4
+velDeltas = [0.0, -0.05, -0.10, -0.15, -0.20];   % offsets from base for L,F1,F2,F3,F4
+spacingDeltas = [0.0, -2.0, -4.0, -6.0];          % offsets from base for gaps 1-2-3-4
 
 % =========================================================
 % MAIN RUN LOOP
@@ -86,13 +87,11 @@ for loopIdx = 1:numRuns
     initialSpacing.Follower2ToFollower3 = sBase + spacingDeltas(3);
     initialSpacing.Follower3ToFollower4 = sBase + spacingDeltas(4);
 
-    intermediate = ampValues(runIdx) / 2;
-
     % --- Acceleration profile ---
-    accelerationProfile.Amplitude  = [ampValues(runIdx) 0 intermediate 0 -0.2 0];
-    accelerationProfile.Period     = 60; 
-    accelerationProfile.PulseWidth = [3 7 9  5 6   30] ;
-    accelerationProfile.PhaseDelay = [0 3 10 19 24 30 ]; 
+    accelerationProfile.Amplitude  = [ampValues(runIdx), 0, -0.12, 0];
+    accelerationProfile.Period     = 60;
+    accelerationProfile.PulseWidth = [8,  15, 8, 29];   % shorter accel (8s), longer final coast
+    accelerationProfile.PhaseDelay = [3,  11, 28, 36];  % brake at t=28, done by t=36
     assignin('base', 'accelerationProfile', accelerationProfile);
 
     % Push overridden values back to base workspace
@@ -187,7 +186,7 @@ for loopIdx = 1:numRuns
 
     platoonFile = fullfile( ...
         outPath, ...
-        sprintf('platoon_run_%d.csv', loopIdx + 25));
+        sprintf('v2_platoon_run_%d.csv', loopIdx + 25));
 
     writetable(T, platoonFile);
 
@@ -295,7 +294,7 @@ for loopIdx = 1:numRuns
     % =====================================================
     % SAVE BSM TABLE
     % =====================================================
-    bsmFile = fullfile(outPath, sprintf('normal_stable_bsm_run_%d.csv', loopIdx));
+    bsmFile = fullfile(outPath, sprintf('v2_normal_stable_bsm_run_%d.csv', loopIdx));
     writetable(BSMTable, bsmFile);
     fprintf('Run %d COMPLETE\n', loopIdx);
 

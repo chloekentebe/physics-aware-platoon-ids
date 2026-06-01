@@ -8,37 +8,34 @@ rng(42, "twister");  % fixed seed — same values every run & twister so its con
 
 lhs = lhs_sample(numRuns, 9);  % 9 = number of varied parameters
 
-% Amplitude:      [0.30, 0.42]
-% Velocity base:  26.5 +- 1.5 m/s → [25.0, 28.0]
-% Spacing base:   12 +- 2 m     → [10, 14]
+% Low cruise speed — congested urban
+ampValues      = 0.10 + (0.18 - 0.10) * lhs(:,1);    % [0.10, 0.18]
+velBases       = 11.0 + (13.0 - 11.0) * lhs(:,2);   % ~12 m/s
+spacingBases   =  6.0 + (10.0 -  6.0) * lhs(:,3);   % [6, 10] tight gaps
 
-ampValues      = 0.30 + (0.42 - 0.30) * lhs(:,1);
-velBases       = 25.0 + (28.0 - 25.0) * lhs(:,2);
-spacingBases   = 10.0 + (14.0 - 10.0) * lhs(:,3);
+% deltaSpeed — more aggressive corrections
+deltaSpeedUp1  =  0.10 + (0.20 - 0.10) * lhs(:,4);   % was [0.20, 0.35] → [0.10, 0.20]
+deltaSpeedUp2  =  0.08 + (0.15 - 0.08) * lhs(:,5);   % was [0.15, 0.25] → [0.08, 0.15]
+deltaSpeedDown = -0.35 + (-0.20 - (-0.35)) * lhs(:,6); % [-0.35, -0.20]
 
-% deltaSpeed per message: each varies +-0.2 around its baseline
-deltaSpeedUp1  =  0.1  + (0.5 - 0.1)  * lhs(:,4);   % [0.1,  0.5]
-deltaSpeedUp2  = 0.0 + (0.3 - 0.0) * lhs(:,5); % [0, 0.3]
-deltaSpeedDown = -0.4  + (-0.1 + 0.4) * lhs(:,6);  % [-0.4, -0.1]
-
-% Timing offset +-2s applied independently to each message window
-timingOffset1  = -2.0  + (4.0)  * lhs(:,7); % SpeedUp  window:  18 +- 2
-timingOffset2  = -2.0  + (4.0)  * lhs(:,8); % SpeedUp2 window:  30 +- 2
-timingOffset3  = -2.0  + (4.0)  * lhs(:,9); % SlowDown window:  45 +- 2
+% Timing offsets +-3s — wider variance for aggressive profile
+timingOffset1  = -3.0 + 6.0 * lhs(:,7);   % SpeedUp  baseline t=14
+timingOffset2  = -3.0 + 6.0 * lhs(:,8);   % SpeedUp2 baseline t=26
+timingOffset3  = -3.0 + 6.0 * lhs(:,9);   % SlowDown baseline t=40
 
 % Shuffle run order so CSV indices aren't sorted by value
 runOrder = randperm(numRuns);
 
 % Output folder
-outPath = '/Users/chloekentebe/physics-aware-platoon-ids/simulation/matlab/stable_data';
+outPath = '/Users/chloekentebe/physics-aware-platoon-ids/simulation/matlab/congested_datav2';
 
 % =========================================================
 % BASELINE DELTAS (preserved relative gaps between vehicles)
 % Velocity:  Leader is fastest, each follower 0.1 m/s slower
 % Spacing:   each gap shrinks by 2m toward the back
 % =========================================================
-velDeltas     = [0.2, 0.1, 0.0, -0.1, -0.2];   % offsets from base for L,F1,F2,F3,F4
-spacingDeltas = [0.2, 0.1, 0.0, -0.1];          % offsets from base for gaps 1-2-3-4
+velDeltas = [0.0, -0.05, -0.10, -0.15, -0.20];   % offsets from base for L,F1,F2,F3,F4
+spacingDeltas = [0.0, -1.0, -2.0, -3.0];         % offsets from base for gaps 1-2-3-4
 
 % =========================================================
 % MAIN RUN LOOP
@@ -59,7 +56,7 @@ for loopIdx = 1:numRuns
     end
     assignin('base', 'BusBSM', BusBSM);
 
-    assignin('base', 'spacing', 15);
+    assignin('base', 'spacing', 8);
 
      % --- Save per-run message parameters to workspace ---
     % The system object will read these each simulation
@@ -86,13 +83,12 @@ for loopIdx = 1:numRuns
     initialSpacing.Follower2ToFollower3 = sBase + spacingDeltas(3);
     initialSpacing.Follower3ToFollower4 = sBase + spacingDeltas(4);
 
-    intermediate = ampValues(runIdx) / 2;
-
     % --- Acceleration profile ---
-    accelerationProfile.Amplitude  = [ampValues(runIdx) 0 intermediate 0 -0.2 0];
-    accelerationProfile.Period     = 60; 
-    accelerationProfile.PulseWidth = [3 7 9  5 6   30] ;
-    accelerationProfile.PhaseDelay = [0 3 10 19 24 30 ]; 
+    accelerationProfile.Amplitude  = [0, 0, -0.5, 0];
+    accelerationProfile.Period     = 60;
+    accelerationProfile.PulseWidth = [1,  1,  8, 50];
+    accelerationProfile.PhaseDelay = [0,  1,  2, 10];
+
     assignin('base', 'accelerationProfile', accelerationProfile);
 
     % Push overridden values back to base workspace
@@ -140,7 +136,7 @@ for loopIdx = 1:numRuns
     T.RunID = repmat(loopIdx, N, 1);
 
     T.Profile = repmat( ...
-        "Stable_Highway", ...
+        "Congested_Highway", ...
         N, ...
         1);
 
@@ -187,7 +183,7 @@ for loopIdx = 1:numRuns
 
     platoonFile = fullfile( ...
         outPath, ...
-        sprintf('platoon_run_%d.csv', loopIdx + 25));
+        sprintf('v2_platoon_run_%d.csv', loopIdx + 75));
 
     writetable(T, platoonFile);
 
@@ -221,7 +217,7 @@ for loopIdx = 1:numRuns
                 tempTable = table();
                 tempTable.Time         = bsmTime;
                 tempTable.RunID        = repmat(loopIdx, M, 1);
-                tempTable.Profile      = repmat("Stable_Highway", M, 1);
+                tempTable.Profile      = repmat("Congested_Highway", M, 1);
                 tempTable.ScenarioType = repmat("Normal", M, 1);
                 tempTable.ReceiverID   = repmat(string(receiverName), M, 1);
                 tempTable.SenderSlot   = repmat(slot, M, 1);
@@ -295,7 +291,7 @@ for loopIdx = 1:numRuns
     % =====================================================
     % SAVE BSM TABLE
     % =====================================================
-    bsmFile = fullfile(outPath, sprintf('normal_stable_bsm_run_%d.csv', loopIdx));
+    bsmFile = fullfile(outPath, sprintf('v2_normal_congested_bsm_run_%d.csv', loopIdx));
     writetable(BSMTable, bsmFile);
     fprintf('Run %d COMPLETE\n', loopIdx);
 
