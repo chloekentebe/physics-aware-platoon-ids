@@ -38,3 +38,4 @@ simulation/matlab/stable_data
 simulation/matlab/aggressive_data
 simulation/matlab/congested_data
 simulation/matlab/*_datav2
+simulation/matlab/normal_data
