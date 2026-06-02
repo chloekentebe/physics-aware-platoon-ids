@@ -21,7 +21,7 @@ This project focuses on detecting false data injection (FDI) attacks in connecte
 - Longitudinal truck platooning
 - Physics-aware consistency features
 - BiLSTM + attention architectures
-- V2V BSM manipulation
+- V2V BSM manipulation + RSU message data injection
 - RSU guidance message integration
 - Sliding temporal windows
 - Realistic acceleration profile generation
