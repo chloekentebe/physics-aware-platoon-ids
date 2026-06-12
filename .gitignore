@@ -38,4 +38,6 @@ simulation/matlab/stable_data
 simulation/matlab/aggressive_data
 simulation/matlab/congested_data
 simulation/matlab/*_datav2
-simulation/matlab/normal_data
+simulation/matlab/normal/normal_dataset
+simulation/matlab/v2v/attack_dataset
+simulation/matlab/v2i/attack_dataset

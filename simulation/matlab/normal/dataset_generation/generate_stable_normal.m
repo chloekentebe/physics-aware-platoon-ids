@@ -12,7 +12,7 @@ lhs = lhs_sample(numRuns, 9);  % 9 = number of varied parameters
 runOrder = randperm(numRuns);
 
 % Output folder
-outPath = '/Users/chloekentebe/physics-aware-platoon-ids/simulation/matlab/normal_dataset';
+outPath = '/Users/chloekentebe/physics-aware-platoon-ids/simulation/matlab/normal/normal_dataset';
 
 % =========================================================
 % MAIN RUN LOOP
