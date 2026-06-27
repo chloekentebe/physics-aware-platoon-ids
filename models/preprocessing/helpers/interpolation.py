@@ -1,5 +1,5 @@
 '''
-Purpose timestamp alignment utilities used by sychronization.py
+Purpose: timestamp alignment utilities used by sychronization.py
 Methods available:
     interpolate_to_grid - primary method: linear for numeric, ffill for categorical
     nearest_merge       - merge_asof wrapper for nearest-timestamp joins
