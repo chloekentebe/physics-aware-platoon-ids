@@ -55,19 +55,20 @@ def check_speed_range(
 def check_spacing_physical(
     df: pd.DataFrame,
     spacing_cols: list[str],
-    min_spacing: float = 0.0,
+    min_spacing: float = 0.5,
     context: str = "dataframe",
 ) -> dict:
-    '''returns a report of physically impossible spacings (negative = collision)'''
+    '''returns a report of physically impossible spacings'''
     report = {}
     for col in spacing_cols:
-        if col not in df.columns:
-            continue
-        n_negative = int((df[col] < min_spacing).sum())
-        report[col] = {
-            "n_negative": n_negative,
-            "min_observed": float(df[col].min()),
-        }
+            if col not in df.columns:
+                continue
+            n_impossible = int((df[col] <= min_spacing).sum())  
+            report[col] = {
+                "n_impossible": n_impossible,
+                "fraction": float(n_impossible / max(len(df), 1)),
+                "min_observed": float(df[col].min()),
+            }
     return report
 
 def check_msgcnt_continuity(
