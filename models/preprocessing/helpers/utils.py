@@ -1,5 +1,8 @@
+'''contains small helper functions'''
+
 from contextlib import contextmanager
 from pathlib import Path
+import os
 import random
 import time
 import numpy as np
@@ -14,6 +17,7 @@ def ensure_dirs(paths):
 def set_seed(seed):
     random.seed(seed)
     np.random.seed(seed)
+    os.environ["PYTHONHASHSEED"] = str(seed)
 
 @contextmanager
 def timer(name):
