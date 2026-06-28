@@ -15,9 +15,13 @@ def save_dataframe(df, path):
     path.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(path, index=False)
 
+def load_dataframe(path):
+    path = Path(path)
+    return pd.read_csv(path)
+
 def save_json(obj, path):
     path = Path(path)
-    path.paret.mkdir(parents=True, exist_ok=True)
+    path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w") as f:
         json.dump(obj, f, indent=2)
 
