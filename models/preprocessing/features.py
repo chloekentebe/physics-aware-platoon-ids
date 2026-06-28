@@ -364,7 +364,7 @@ def add_section_c_physics_consistency(df: pd.DataFrame) -> pd.DataFrame:
                 df["platoon_speed_leader"], df[speed_col]
             )
     
-    # C7. PREDICTED SPACING AND RESIDUAL
+    # C7A. PREDICTED SPACING AND RESIDUAL
     # given current spacing and relative speed, predict spacing one step ahead
     # residual between prediction and observed spacing reveals dynamic anomalies
     if {"receiver_spacing", "relative_speed_leader_follower1"}.issubset(df.columns):
@@ -384,6 +384,27 @@ def add_section_c_physics_consistency(df: pd.DataFrame) -> pd.DataFrame:
             df["receiver_spacing"], df["predicted_spacing"]
         )
         df["spacing_residual_abs"] = df["spacing_residual"].abs()
+
+    # C7B. PREDICTED SPEED RESIDUAL
+    # expected: v(t) ≈ v(t-1) + a(t-1)*dt
+    # deviation from this kinematic prediction reveals false speed claims
+    if BSM_SPEED_COL in df.columns and BSM_ACCEL_COL in df.columns:
+        prev_speed = (
+            df.groupby(GROUP_COLS_BSM)[BSM_SPEED_COL]
+            .shift(1)
+            .fillna(df[BSM_SPEED_COL])
+        )
+        prev_accel = (
+            df.groupby(GROUP_COLS_BSM)[BSM_ACCEL_COL]
+            .shift(1)
+            .fillna(0)
+        )
+        df["predicted_speed_bsm"] = predicted_speed(
+            prev_speed, prev_accel, CONFIG.bsm_time_step
+        )
+        df["speed_prediction_residual"] = residual(
+            df[BSM_SPEED_COL], df["predicted_speed_bsm"]
+        )
     
     # C8. EXPECTED ACCELERATION FROM CACC PHYSICS
     # the CACC controller formula: a_cmd = 0.8*a_lead + 0.2*a_prev - 8*(v_ego - v_lead) - k_p*e
