@@ -18,7 +18,7 @@ import numpy as np
 from config import CONFIG
 from helpers.io import load_csv, save_dataframe
 from helpers.utils import ensure_dir, log
-from helpers.validation import require_columns, require_monotonic, report_quality
+from helpers.validation import require_columns, require_monotonic, report_quality, check_msgcnt_continuity, check_spacing_physical, check_speed_range
 from helpers.interpolation import interpolate_to_grid
 from helpers.labels import NORMAL_LABEL_DEFAULTS
 
@@ -267,6 +267,22 @@ def synchronize(merged: pd.DataFrame | None = None) -> pd.DataFrame:
     synchronized = synchronized.sort_values(sort_cols).reset_index(drop=True)
 
     quality = report_quality(synchronized)
+    speed_report = check_speed_range(synchronized, "bsm_speed", context="synchronized")
+    spacing_report = check_spacing_physical(
+        synchronized,
+        spacing_cols=["spacing_l_f1","spacing_f1_f2","spacing_f2_f3","spacing_f3_f4"],
+        context="synchronized"
+    )
+    msgcnt_report = check_msgcnt_continuity(
+        synchronized,
+        group_cols=["GlobalRunID","ReceiverID","SenderSlot"],
+        context="synchronized"
+    )
+    log(f"Quality: {quality}")
+    log(f"Speed range: {speed_report}")
+    log(f"Spacing physical: {spacing_report}")
+    log(f"MsgCnt continuity: {msgcnt_report}")
+
     log(f"Synchronization complete: {quality['rows']:,} rows, "
         f"{quality['columns']} columns, "
         f"{quality['missing_values']:,} missing values")

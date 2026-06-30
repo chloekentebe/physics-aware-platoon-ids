@@ -18,6 +18,7 @@ from config import CONFIG
 from helpers.io import save_json, load_json
 from helpers.labels import encode_hierarchy, build_all_label_maps
 from helpers.utils import ensure_dir, set_seed, log
+from collections import Counter
 
 def stratified_run_split(run_metadata: dict, seed: int) -> dict[str, set]:
     '''
@@ -66,13 +67,21 @@ def stratified_run_split(run_metadata: dict, seed: int) -> dict[str, set]:
         f"val: {len(splits['val'])} runs | test: {len(splits['test'])} runs")
     return splits
 
+def compute_class_weights(labels: np.ndarray) -> dict:
+    '''inverse frequency weighting for imbalanced classes'''
+    counts = Counter(labels.tolist())
+    total = sum(counts.values())
+    return {cls: total / (len(counts) * count)
+            for cls, count in counts.items()}
+
+
 def save_dataset():
     '''
     loads windowed data, encodes the full label hierarchy, performs a
     RunID-stratified split, and writes one .npz per split plus metadata
     '''
     # load windowed data
-    windows_path = CONFIG.windows_wir / CONFIG.windows_file
+    windows_path = CONFIG.windows_dir / CONFIG.windows_file
     log(f"Loading windows from {windows_path}")
     data = np.load(windows_path, allow_pickle=True)
 
@@ -94,6 +103,14 @@ def save_dataset():
         "attack_type":    data["label_attack_type"].astype(str).tolist(),
     }
     encoded = encode_hierarchy(raw_labels)
+
+    class_weights = {
+        "is_attack":     compute_class_weights(encoded["label_is_attack"]),
+        "attack_vector": compute_class_weights(encoded["label_attack_vector"]),
+        "attacker_id":   compute_class_weights(encoded["label_attacker_id"]),
+        "attack_type":   compute_class_weights(encoded["label_attack_type"]),
+    }
+    save_json(class_weights, CONFIG.final_dir / "class_weights.json")
 
     # build run metadata for stratified split
     # one entry per unique GlobalRunID (profile and attack_type are constant

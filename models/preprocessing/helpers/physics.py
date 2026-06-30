@@ -1,3 +1,4 @@
+'''contains every reusable physics calculation'''
 import numpy as np
 
 def safe_divide(numerator, denominator, default=0.0):
@@ -16,6 +17,10 @@ def relative_acceleration(front_accel, rear_accel):
     return front_accel - rear_accel
 
 def closing_rate(front_speed, rear_speed):
+    '''
+    positive = rear vehicle catching up to fron vehicle (gap shrinking)
+    negative = rear vehicle falling behind (gap growing)
+    '''
     return rear_speed - front_speed
 
 def time_headway(spacing, speed):
@@ -27,23 +32,22 @@ def spacing_error(actual_spacing, desired_spacing):
 def speed_error(actual_speed, desired_speed):
     return actual_speed - desired_speed
 
-def position_error(actual_position, desired_position):
-    return actual_position - desired_position
-
-def acceleration_error(actual_acceleration, desired_acceleration):
-    return actual_acceleration - desired_acceleration
-
-def predicted_position(position, speed, dt):
-    return position + (speed * dt)
-
 def predicted_spacing(previous_spacing, relative_speed_value, dt):
     return previous_spacing + relative_speed_value * dt
+
+def predicted_speed(previous_speed, relative_acceleration_value, dt):
+    return previous_speed + relative_acceleration_value * dt
 
 def residual(actual, predicted):
     return actual - predicted
 
 def jerk(acceleration, dt):
-    return safe_divide(np.diff(acceleration, prepend=acceleration[0]), dt)
+    if hasattr(acceleration, "to_numpy"):
+        acceleration = acceleration.to_numpy()
+    diff = np.diff(acceleration, prepend=acceleration[0])
+    return safe_divide(diff, dt)
 
 def rolling_rms(series, window):
+    if not hasattr(series, "rolling"):
+        series = pd.Series(series)
     return np.sqrt(series.pow(2).rolling(window, min_periods=1).mean())

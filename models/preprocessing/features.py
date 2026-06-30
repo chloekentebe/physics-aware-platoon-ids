@@ -247,6 +247,9 @@ def add_section_c_physics_consistency(df: pd.DataFrame) -> pd.DataFrame:
     by observing these features across the temporal window
     '''
 
+    df = _assign_sender_ground_truth(df)
+    df = _assign_receiver_spacing(df)
+    
     # C1. SPEED CONSISTENCY
     # BSM-reported speed vs ground-truth platoon speed of the same sender
     # SpeedFDI attack: df["speed_consistency_error"] deviates from ~0
@@ -417,7 +420,7 @@ def add_section_c_physics_consistency(df: pd.DataFrame) -> pd.DataFrame:
         # simplified expected: if sender is honest, BSM accel should track
         # platoon accel within sensor noise
         df["expected_accel_from_cacc"] = (
-            0.8 * df["platoon_accel_leader"]
+            CONFIG.cacc_c1 * df["platoon_accel_leader"]
         )
         df["cacc_accel_residual"] = residual(
             df[BSM_ACCEL_COL], df["expected_accel_from_cacc"]
